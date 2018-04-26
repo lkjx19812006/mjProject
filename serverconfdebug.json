@@ -1,0 +1,104 @@
+{
+  "logmask": "房卡麻将",
+  "preaction": {
+    "script": {
+      "cmd": ""
+    }
+  },
+  "services": {
+    "webServer": {
+      "hosts": [
+        {
+          "id": "webServer",
+          "ip": "127.0.0.1",
+          "port": "39000",
+          "custom": {}
+        }
+      ]
+    },
+    "Door": {
+      "hosts": [
+        {
+          "id": "Door1",
+          "ip": "127.0.0.1",
+          "port": "39301",
+          "custom": {}
+        }
+      ]
+    },
+    "HallService": {
+      "hosts": [
+        {
+          "id": "HallService1",
+          "ip": "127.0.0.1",
+          "port": "39401",
+          "custom": {}
+        },
+        {
+          "id": "HallService2",
+          "ip": "127.0.0.1",
+          "port": "39402",
+          "custom": {}
+        }
+      ]
+    },
+    "GameService": {
+      "hosts": [
+        {
+          "id": "GameService1",
+          "ip": "127.0.0.1",
+          "port": "39501",
+          "custom": {}
+        },
+        {
+          "id": "GameService2",
+          "ip": "127.0.0.1",
+          "port": "39502",
+          "custom": {}
+        }
+      ]
+    },
+    "Test": {
+      "hosts": [
+        {
+          "id": "Test1",
+          "ip": "127.0.0.1",
+          "port": "36502",
+          "custom": {}
+        }
+      ]
+    }
+  },
+  "doors": {},
+  "serverblance": {
+    "HallService": [
+      "127.0.0.1:39401",
+      "127.0.0.1:39402"
+    ],
+    "GameService": [
+      "127.0.0.1:39501",
+      "127.0.0.1:39502"
+    ]
+  },
+  "database": {
+    "mongodb": {
+      "account": "yinqian",
+      "pass": "123456",
+      "ip": "127.0.0.1",
+      "port": "27017",
+      "dbname": "mj"
+    }
+  },
+  "ids": {
+    "from": 10000000,
+    "to": 99999999,
+    "countpath": "data/idcounts.txt",
+    "path": "data/ids.txt",
+    "create": false
+  },
+  "safeCode": "sdf9ew98r8iwehjf234324u854395u34jsdfgjsdjghn0435r00",
+  "codes": {
+    "-1": "客户端需要重新微信认证",
+    "1000": "网络错误请重试"
+  }
+}
