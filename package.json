@@ -17,6 +17,8 @@
     "mongoose": "^5.0.16",
     "msgpack-lite": "^0.1.26",
     "node-uuid": "^1.4.8",
-    "socket.io": "^2.1.0"
+    "redis": "^2.8.0",
+    "socket.io": "^2.1.0",
+    "socket.io-redis": "^5.2.0"
   }
 }

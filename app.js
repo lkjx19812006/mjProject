@@ -45,10 +45,10 @@ const asyncRun = async function () {
 
   //主进程
   app.listen(port || 3000);
+  //后续其他服务可在这里开启
+  console.log('服务启动成功----主进程端口号：' + port || 3000)
 
   //启动子进程
   ChildProcessManager.startHallService();//开启大厅服务
-  //后续其他服务可在这里开启
-  console.log('服务启动成功----当前端口号：' + port || 3000)
 }
 asyncRun();

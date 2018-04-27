@@ -22,11 +22,11 @@ class ChildProcessManager {
       this.HallServices.push(fork(path.join(__dirname, './HallService.js'), [item.port, item.id, item.custom]));
       console.log('子进程大厅服务启动成功:' + item.ip + ":" + item.port)
       //监听进程消息
-      // this.HallServices[index].on('message', (msg) => {
-      //   if (msg.cmd && msg.cmd === 'client connect') {
-      //     console.log('有用户加入')
-      //   }
-      // })
+      this.HallServices[index].on('message', (msg) => {
+        if (msg.cmd && msg.cmd === 'client connect') {
+          console.log('有用户加入')
+        }
+      })
 
     });
 
