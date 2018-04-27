@@ -1,29 +1,11 @@
-const conf = require('../common/Config').instance()
-const DataBaseManager = require('../dbManager/DataBaseManager').instance()
-const IDs = require('../common/IDs').instance()
-const ServerBlance = require('../common/ServerBlance').instance()
+const DataBaseManager = require('../../dbManager/DataBaseManager').instance()
+const IDs = require('../../common/IDs').instance()
+const ServerBlance = require('../../common/ServerBlance').instance()
+class User {
+  constructor() {
 
-const express = require('express')
-const app = express()
-const bodyParser = require('body-parser')
-//获取body中间件
-app.use(bodyParser.urlencoded({ extended: false }))
-
-
-const asyncRun = async function () {
-  var ok = await DataBaseManager.initDBFromServerConfig()
-  if (!ok) {
-    console.log('"数据库初始化错误！请检查！@Api.js');
-    return
   }
-
-  app.all('*', function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
-    next();
-  });
-
-  app.post('/testLogin', async (req, res) => {
+  async testLogin(req, res) {
     //1.获取客户端传递账号
     //2.判断账号是否被注册
     //3.如果注册直接返回account pass hallUrl code； 如果没有注册注册新账号
@@ -55,15 +37,8 @@ const asyncRun = async function () {
       var hallUrl = ServerBlance.getIp("HallService", userinfo.openid);
       res.status(200).send({ msg: '用户创建成功', code: "1c0e", data: { account: userinfo.account, pass: userinfo.pass, hallUrl: hallUrl } })
     }
-  })
-
-  var port;
-  try {
-    port = conf.getConfig('services')['webServer']['hosts'][0]['port']
-  } catch (error) {
   }
 
-  app.listen(port || 3000);
-  console.log('web服务启动成功----当前端口号：' + port || 3000)
 }
-asyncRun();
+
+module.exports = User

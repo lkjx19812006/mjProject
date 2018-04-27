@@ -31,13 +31,13 @@
         {
           "id": "HallService1",
           "ip": "127.0.0.1",
-          "port": "39401",
+          "port": 39401,
           "custom": {}
         },
         {
           "id": "HallService2",
           "ip": "127.0.0.1",
-          "port": "39402",
+          "port": 39402,
           "custom": {}
         }
       ]
@@ -47,13 +47,13 @@
         {
           "id": "GameService1",
           "ip": "127.0.0.1",
-          "port": "39501",
+          "port": 39501,
           "custom": {}
         },
         {
           "id": "GameService2",
           "ip": "127.0.0.1",
-          "port": "39502",
+          "port": 39502,
           "custom": {}
         }
       ]

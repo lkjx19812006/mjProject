@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script src='./socket.io.js'></script>
+  <script src="./axios.js"></script>
+</head>
+
+<body>
+  <input id="account" type="text" placeholder="请输入账号">
+  <button id="join">加入</button>
+  <script>
+    var account = document.getElementById('account');
+    var join = document.getElementById('join');
+    join.onclick = function () {
+      var val = account.value;
+      console.log(val)
+      axios({
+        url: '/user/testLogin',
+        data: {
+          account: val
+        },
+        method: 'post'
+      }).then(res => {
+        if (res.status === 200) {
+          var result = res.data.data;
+          //连接游戏大厅
+          var url = 'ws://' + result.hallUrl;
+          console.log(url)
+          const socket = io(url);
+          socket.emit('join', { name: 1, age: 1 }, (res) => {
+            console.log(res)
+          })
+
+        }
+
+      })
+    }
+
+  </script>
+</body>
+
+</html>
