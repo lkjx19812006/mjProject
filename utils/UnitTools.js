@@ -469,26 +469,26 @@ UnitTools.startNewProcess = function(args,datacb,errorcb,closecb)
     return child;
 }
 
-UnitTools.doCommond = function (cmdStr,datacb,errorcb,closecb) {
-    var child_process = require('child_process');
-    var child = child_process.spawn(cmdStr,[]);
-    child.stdout.setEncoding('utf8');
-    child.stdout.on('data', function (data) {
-        datacb(data);
-    });
+// UnitTools.doCommond = function (cmdStr,datacb,errorcb,closecb) {
+//     var child_process = require('child_process');
+//     var child = child_process.spawn(cmdStr,[]);
+//     child.stdout.setEncoding('utf8');
+//     child.stdout.on('data', function (data) {
+//         datacb(data);
+//     });
 
-//监听子进程的错误流数据
-    child.stderr.on('data', function (data) {
-        var c = data.toString('utf8');
-        errorcb(c);
-    });
+// //监听子进程的错误流数据
+//     child.stderr.on('data', function (data) {
+//         var c = data.toString('utf8');
+//         errorcb(c);
+//     });
 
-//监听子进程的退出事件
-    child.on('close', function (code) {
-        closecb("子程序退出"+code);
-    });
-    return child;
-}
+// //监听子进程的退出事件
+//     child.on('close', function (code) {
+//         closecb("子程序退出"+code);
+//     });
+//     return child;
+// }
 
 //将数组两个两个转换为json,第一个参数为值的key
 UnitTools.arrayToJsonArray = function(array,key){

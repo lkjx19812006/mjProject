@@ -1,6 +1,9 @@
 const conf = require('../common/Config').instance()
 const path = require('path')
-const fork = require('child_process').fork;
+const fork = require('child_process').fork
+const UnitTools = require('../utils/UnitTools')
+
+const HallService = require('./HallService')
 
 class ChildProcessManager {
   constructor() {
@@ -16,6 +19,17 @@ class ChildProcessManager {
     }
     return ChildProcessManager.g_Instance
   }
+
+  //单线程启动所有服务 主要是本地开发调试
+  startAllService() {
+    //1.开启大厅服务
+    this.HallConf.forEach((item, index) => {
+      var hallS = new HallService(item.port)
+      this.HallServices.push(hallS)
+    })
+  }
+
+
   //开启大厅服务
   startHallService() {
     this.HallConf.forEach((item, index) => {

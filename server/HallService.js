@@ -1,178 +1,111 @@
-var process = require('process');
 
-var io = require('socket.io')();
+// /**
+//  * 上报连接到master进程 
+//  * @return {[type]} [description]
+//  */
+// var reportConnect = function () {
+//   num++;
+//   console.log('worker pid: ' + process.pid + ' client connect connection num:' + num);
+//   process.send({
+//     cmd: 'client connect'
+//   });
+// };
 
-var num = 0;
+const conf = require('../common/Config')
+const process = require('process')
+const RedisServer = require('./RedisServer')
 
-var redis = require('redis');
-var redisClient = redis.createClient;
-var pub = redisClient(6379, '127.0.0.1');
-var sub = redisClient(6379, '127.0.0.1');
-
-var roomSet = {};
-
-
-//获取父进程传递端口
-var port = parseInt(process.argv[2]);
-// var roomid = null;
-
-io.on('connection', function (socket) {
-
-  //客户端请求ws URL:  http://127.0.0.1:6001?roomid=k12_webcourse_room_1
-  var roomid = socket.handshake.query.roomid;
-
-  console.log('worker pid: ' + process.pid + ' join roomid: ' + roomid);
-
-  socket.on('join', function (data) {
-
-    socket.join(roomid); //加入房间
-
-    if (!roomSet[roomid]) {
-      roomSet[roomid] = {};
-      console.log('sub channel ' + roomid);
-      sub.subscribe(roomid);
+class HallManager {
+  constructor(port) {
+    //获取父进程传递的数据 拿到端口号
+    this.port = port;//获取实例化的端口号
+    this.io = null;
+    this.redis = null;
+    this.roomSet = {};
+    this.eventName = ['join', 'say', 'disconnect']
+    this.init()
+  }
+  //初始化事件监听
+  init() {
+    if (!this.port) {
+      return new Error('port is not defined')
     }
-    roomSet[roomid][socket.id] = {};
+    //监听端口
+    this.io = require('socket.io')(this.port, {})
 
-    reportConnect();
+    //设置redis
+    this.redis = new RedisServer(this.io, this.port)
+
+    //开启链接
+    this.io.on('connection', (socket) => {
+      const roomid = socket.handshake.query.roomid;//获取链接地址中的房间号
+      console.log('链接成功过')
+      //配置事件监听
+      socket.on('join', data => { this.join(socket, data) })//加入房间
+      socket.on('say', data => { this.say(socket, data) })//说话
+      socket.on('disconnect', () => { this.disconnect(socket, roomid) })//用户退出
+
+    })
+  }
+
+  //服务名称 监听该服务 必须与服务名称对应
+  join(socket, data) {
+    console.log(socket)
+    socket.join(data.roomid); //加入房间
+
+    if (!this.roomSet[data.roomid]) {
+      this.roomSet[data.roomid] = {};
+      console.log('sub channel ' + data.roomid);
+      this.redis.sub.subscribe(data.roomid);
+    }
+    this.roomSet[data.roomid][socket.id] = {};
+
+    // reportConnect();
 
     console.log(data.username + ' join, IP: ' + socket.client.conn.remoteAddress);
-    roomSet[roomid][socket.id].username = data.username;
-    // io.to(roomid).emit('broadcast_join', data);
-    pub.publish(roomid, JSON.stringify({
+    this.roomSet[data.roomid][socket.id].username = data.username;
+
+    //发布加入的消息
+    this.redis.pub.publish(data.roomid, JSON.stringify({
       "event": 'join',
       "data": data
     }));
 
-  });
+    this.redis.setClientNum('join')
+  }
 
-  socket.on('say', function (data) {
-    console.log("Received Message: " + data.text);
-    pub.publish(roomid, JSON.stringify({
+  say(socket, data) {
+    this.redis.pub.publish(data.roomid, JSON.stringify({
       "event": 'broadcast_say',
       "data": {
-        username: roomSet[roomid][socket.id].username,
+        username: this.roomSet[data.roomid][socket.id].username,
         text: data.text
       }
     }));
-  });
+  }
 
-
-  socket.on('disconnect', function () {
-    num--;
-    console.log('worker pid: ' + process.pid + ' clien disconnection num:' + num);
-    process.send({
-      cmd: 'client disconnect'
-    });
-
-    if (roomSet[roomid] && roomSet[roomid][socket.id] && roomSet[roomid][socket.id].username) {
-      console.log(roomSet[roomid][socket.id].username + ' quit');
-      pub.publish(roomid, JSON.stringify({
+  //客户端退出
+  disconnect(socket, roomid) {
+    console.log(this.io)
+    if (this.roomSet[roomid] && this.roomSet[roomid][socket.id] && this.roomSet[roomid][socket.id].username) {
+      console.log(this.roomSet[roomid][socket.id].username + ' quit');
+      this.redis.pub.publish(roomid, JSON.stringify({
         "event": 'broadcast_quit',
         "data": {
-          username: roomSet[roomid][socket.id].username
+          username: this.roomSet[roomid][socket.id].username
         }
       }));
+      this.redis.setClientNum('quit')
     }
-    roomSet[roomid] && roomSet[roomid][socket.id] && (delete roomSet[roomid][socket.id]);
+  }
 
-  });
-});
+}
 
-/**
- * 订阅redis 回调
- * @param  {[type]} channel [频道]
- * @param  {[type]} count   [数量]  
- * @return {[type]}         [description]
- */
-sub.on("subscribe", function (channel, count) {
-  console.log('worker pid: ' + process.pid + ' subscribe: ' + channel);
-});
+//多进程启动 生产模式进行
+if (process.argv[2] && conf.mode !== 'debug') {
+  new HallManager(process.argv[2]);
+  console.log('多进程启动')
+}
 
+module.exports = HallManager
 
-/**
- * [description]
- * @param  {[type]} channel  [description]
- * @param  {[type]} message
- * @return {[type]}          [description]
- */
-sub.on("message", function (channel, message) {
-  console.log("message channel " + channel + ": " + message);
-
-  io.to(channel).emit('message', JSON.parse(message));
-});
-
-/**
- * 上报连接到master进程 
- * @return {[type]} [description]
- */
-var reportConnect = function () {
-  num++;
-  console.log('worker pid: ' + process.pid + ' client connect connection num:' + num);
-  process.send({
-    cmd: 'client connect'
-  });
-};
-
-
-io.listen(port);
-
-console.log('worker pid: ' + process.pid + ' listen port:' + port);
-
-
-// const process = require('process')
-// const io = require('socket.io')()
-// //获取父进程传递的数据 拿到端口号
-// const port = process.argv[2];
-// //开启链接监听
-// io.on('connection', (socket) => {
-//   //下面是所有大厅的监听服务
-//   var hall = new HallManager(socket);
-// })
-
-// class HallManager {
-//   constructor(socket) {
-//     this.socket = socket;
-//     //所有服务名称
-//     this.serversName = ['join']
-//     this.init()
-//   }
-//   //初始化事件监听
-//   init() {
-//     this.serversName.forEach(item => {
-//       this.socket.on(item, this[item])
-//     })
-//   }
-//   //服务名称 监听改服务 必须与服务名称对应
-//   join(data) {
-//     var roomid = this.socket.handshake.query.roomid;
-//     socket.join(roomid); //加入房间
-
-//     if (!roomSet[roomid]) {
-//       roomSet[roomid] = {};
-//       console.log('sub channel ' + roomid);
-//       sub.subscribe(roomid);
-//     }
-//     roomSet[roomid][socket.id] = {};
-
-//     reportConnect();
-
-//     console.log(data.username + ' join, IP: ' + socket.client.conn.remoteAddress);
-//     roomSet[roomid][socket.id].username = data.username;
-//     // io.to(roomid).emit('broadcast_join', data);
-//     pub.publish(roomid, JSON.stringify({
-//       "event": 'join',
-//       "data": data
-//     }));
-//   }
-
-
-// }
-
-// //监听端口
-// io.listen(port);
-
-// var redis = require('redis');
-// var redisClient = redis.createClient;
-// var pub = redisClient(6379, '127.0.0.1');
-// var sub = redisClient(6379, '127.0.0.1');

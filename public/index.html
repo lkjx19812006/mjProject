@@ -191,21 +191,16 @@
   <div class="placeholder footer"></div>
   <script src="./socket.io.js"></script>
   <script>
-    var roomid = (function () {
-      return prompt('请输入房间号', '')
-    })();
-    var userInfo = {
-      username: (function () {
-        return prompt('请输入rtx昵称', '');
-      })()
-    };
+    function myRandom(minNum, maxNum) {
+      var length = maxNum - minNum;
+      var random = Math.floor(Math.random() * (length + 1));
+      return minNum + random;
+    }
+    var roomid = 1
+    var username = "测试用户名：" + myRandom(1, 100000);
     if (roomid != null && roomid != "") {
       //获取随机值链接不同的大厅服务器
-      function myRandom(minNum, maxNum) {
-        var length = maxNum - minNum;
-        var random = Math.floor(Math.random() * (length + 1));
-        return minNum + random;
-      }
+
       var rand = myRandom(0, 10000)
       if (rand % 2 === 0) {
         url = 'ws://127.0.0.1:39401'
@@ -213,10 +208,12 @@
         url = 'ws://127.0.0.1:39402'
       }
       console.log(url, rand)
+
       var socket = io.connect(url + '?roomid=' + roomid);
       /*连接完毕，马上发送一个'join'事件，把自己的用户名告诉别人*/
       socket.emit('join', {
-        username: userInfo.username
+        username: username,//用户名
+        roomid: roomid//房间号
       });
       socket.on('message', function (msg) {
         switch (msg.event) {
@@ -230,7 +227,7 @@
             }
             break;
           case 'broadcast_say':
-            if (msg.data.username !== userInfo.username) {
+            if (msg.data.username !== username) {
               console.log(msg.data.username + '说: ' + msg.data.text);
               showMessage(msg.data);
             }
@@ -247,6 +244,7 @@
         }
       })
     }
+
     /*点击发送按钮*/
     document.getElementById('send').onclick = function () {
       var keywords = document.getElementById('keywords');
@@ -257,7 +255,8 @@
       var data = {
         text: keywords.value,
         type: 0,
-        username: userInfo.username
+        username: username,
+        roomid: roomid
       };
       /*向服务器提交一个say事件，发送消息*/
       socket.emit('say', data);
@@ -297,50 +296,3 @@
 </html>
 
 
-<!-- <!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Document</title>
-  <script src='./socket.io.js'></script>
-  <script src="./axios.js"></script>
-</head>
-
-<body>
-  <input id="account" type="text" placeholder="请输入账号">
-  <button id="join">加入</button>
-  <script>
-    var account = document.getElementById('account');
-    var join = document.getElementById('join');
-    join.onclick = function () {
-      var val = account.value;
-      console.log(val)
-      axios({
-        url: '/user/testLogin',
-        data: {
-          account: val
-        },
-        method: 'post'
-      }).then(res => {
-        if (res.status === 200) {
-          var result = res.data.data;
-          //连接游戏大厅
-          var url = 'ws://' + result.hallUrl;
-          console.log(url)
-          const socket = io(url);
-          socket.emit('join', { name: 1, age: 1 }, (res) => {
-            console.log(res)
-          })
-
-        }
-
-      })
-    }
-
-  </script>
-</body>
-
-</html> -->

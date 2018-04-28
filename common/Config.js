@@ -5,7 +5,8 @@ const config = require(path.join(__dirname, '../modeConfig.json'))
 
 class Config {
   constructor(props) {
-    if (config.mode === 'debug') {
+    this.mode = config.mode;
+    if (this.mode === 'debug') {
       console.log('配置文件读取当前模式----调试模式----')
       this.config = require(path.join(__dirname, '../serverconfdebug.json'))
     } else {
