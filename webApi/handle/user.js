@@ -1,5 +1,6 @@
 const DataBaseManager = require('../../dbManager/DataBaseManager').instance()
 const IDs = require('../../common/IDs').instance()
+const Roomids = require('../../common/Roomids').instance()
 const ServerBlance = require('../../common/ServerBlance').instance()
 class User {
   constructor() {
@@ -11,7 +12,7 @@ class User {
     //3.如果注册直接返回account pass hallUrl code； 如果没有注册注册新账号
     var account = req.body.account;
     if (!account) {
-      res.status(400).send({ msg: '请输入账号', code: '00e0' })
+      res.status(400).send({ ok: true, msg: '请输入账号', code: '00e0' })
       return
     };
 
@@ -19,7 +20,7 @@ class User {
 
     if (playerInfo) {//有用户 直接返回
       var hallUrl = ServerBlance.getIp("HallService", playerInfo.openid);
-      res.status(200).send({ msg: '请求成功', code: "1c0e", data: { account: playerInfo.account, pass: playerInfo.pass, hallUrl: hallUrl } })
+      res.status(200).send({ ok: true, msg: '请求成功', code: "1c0e", data: { account: playerInfo.account, pass: playerInfo.pass, hallUrl: hallUrl } })
     } else {//注册用户
       //id, openid, unionid, nickname, sex, headimgurl, account, pass, score
       var id = await IDs.getID();
@@ -35,9 +36,16 @@ class User {
         0
       );
       var hallUrl = ServerBlance.getIp("HallService", userinfo.openid);
-      res.status(200).send({ msg: '用户创建成功', code: "1c0e", data: { account: userinfo.account, pass: userinfo.pass, hallUrl: hallUrl } })
+      res.status(200).send({ ok: true, msg: '用户创建成功', code: "1c0e", data: { account: userinfo.account, pass: userinfo.pass, hallUrl: hallUrl } })
     }
   }
+
+  //获取当前房间号
+  async getRoomids(req, res) {
+    var roomids = await Roomids.getID();
+    res.status(200).send({ ok: true, msg: '获取成功', code: "1c0e", data: { room: roomids } })
+  }
+
 
 }
 

@@ -11,10 +11,6 @@
       box-sizing: border-box
     }
 
-    .tc {
-      text-align: center
-    }
-
     body,
     dd,
     dl,
@@ -36,263 +32,76 @@
       background-color: #f2f2f2;
       font: 12px/1.444 "microsoft yahei"
     }
-
-    ul {
-      padding: 0 10px;
-      list-style: none
-    }
-
-    #option {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      display: -webkit-flex;
-      display: flex;
-      display: -webkit-box;
-      padding: 10px;
-      width: 100%;
-      background-color: #f2f2f2;
-      -webkit-flex-direction: row;
-      flex-direction: row;
-      -webkit-box-orient: horizontal
-    }
-
-    #option input {
-      outline: 0;
-      border: 1px solid #ccc
-    }
-
-    input#keywords {
-      display: block;
-      padding: 0 0 0 10px;
-      height: 40px;
-      border-right: 0;
-      -webkit-flex: 1;
-      flex: 1;
-      -webkit-box-flex: 1
-    }
-
-    input#keywords:focus {
-      font-size: 20px
-    }
-
-    input#send {
-      width: 80px;
-      height: 40px;
-      border-left: 0;
-      background: #8CC63E;
-      color: #fff;
-      cursor: pointer;
-      -webkit-transition: .3s;
-      transition: .3s
-    }
-
-    input#send:hover {
-      background: #2FBF08
-    }
-
-    input#send:active {
-      background: #009100
-    }
-
-    #list dd {
-      overflow: hidden;
-      padding: 5px 0
-    }
-
-    #list dd li {
-      overflow: hidden
-    }
-
-    #list dd .nick-name {
-      padding: 5px;
-      color: #999
-    }
-
-    #list dd .head-icon {
-      float: left;
-      margin: 0 5px;
-      width: 30px;
-      height: 30px;
-      border-radius: 5px;
-      background: url(static/icons/user_a.png) no-repeat center center;
-      background-size: cover
-    }
-
-    #list dd .text {
-      position: relative;
-      float: left;
-      padding: 6px 10px;
-      max-width: 60%;
-      min-height: 30px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-      background-color: #fff;
-      color: #333;
-      word-wrap: break-word
-    }
-
-    #list dd .text:before {
-      position: absolute;
-      top: 10px;
-      width: 0;
-      height: 0;
-      content: ''
-    }
-
-    #list dd.me .text:before {
-      right: -4px;
-      border-top: 5px solid transparent;
-      border-bottom: 5px solid transparent;
-      border-left: 5px solid #8CC63E
-    }
-
-    #list dd.other .text:before {
-      left: -4px;
-      width: 5px;
-      height: 5px;
-      border-bottom: 1px solid #ccc;
-      border-left: 1px solid #ccc;
-      background-color: #fff;
-      -webkit-transform: rotate(45deg);
-      transform: rotate(45deg)
-    }
-
-    #list dd.me .nick-name {
-      display: none;
-      text-align: right
-    }
-
-    #list dd.me .head-icon {
-      float: right;
-      background-image: url(static/icons/user_b.png)
-    }
-
-    #list dd.me .text {
-      float: right;
-      border: 0;
-      background-color: #8CC63E
-    }
-
-    .placeholder.footer {
-      height: 50px
-    }
   </style>
 </head>
 
 <body>
-  <h1 class="tc">Welcome!</h1>
-  <hr/>
-  <dl id="list"></dl>
-  <div id="option">
-    <input type="text" id="keywords" autofocus/>
-    <input type="button" name="" id="send" value="发送" />
+  <div class="box" id="app">
+    <div class="index" v-if="screen == 'index'">
+      <input v-model="account" type="text">
+      <button @click="login">登陆</button>
+    </div>
+
+    <div class="hall" v-if="screen == 'hall'">
+      <button @click="clearRoom">创建房间</button>
+      <br>
+      <input type="text" v-model="room">
+      <button @click="addRoom">加入房间</button>
+    </div>
   </div>
+
+
   <div class="placeholder footer"></div>
   <script src="./socket.io.js"></script>
+  <script src="./static/vue.min.js"></script>
+  <script src="./static/axios.js"></script>
   <script>
-    function myRandom(minNum, maxNum) {
-      var length = maxNum - minNum;
-      var random = Math.floor(Math.random() * (length + 1));
-      return minNum + random;
-    }
-    var roomid = 1
-    var username = "测试用户名：" + myRandom(1, 100000);
-    if (roomid != null && roomid != "") {
-      //获取随机值链接不同的大厅服务器
-
-      var rand = myRandom(0, 10000)
-      if (rand % 2 === 0) {
-        url = 'ws://127.0.0.1:39401'
-      } else {
-        url = 'ws://127.0.0.1:39402'
-      }
-      console.log(url, rand)
-
-      var socket = io.connect(url + '?roomid=' + roomid);
-      /*连接完毕，马上发送一个'join'事件，把自己的用户名告诉别人*/
-      socket.emit('join', {
-        username: username,//用户名
-        roomid: roomid//房间号
-      });
-      socket.on('message', function (msg) {
-        switch (msg.event) {
-          case 'join':
-            if (msg.data.username) {
-              console.log(msg.data.username + '加入了聊天室');
-              var data = {
-                text: msg.data.username + '加入了聊天室'
-              };
-              showNotice(data);
-            }
-            break;
-          case 'broadcast_say':
-            if (msg.data.username !== username) {
-              console.log(msg.data.username + '说: ' + msg.data.text);
-              showMessage(msg.data);
-            }
-            break;
-          case 'broadcast_quit':
-            if (msg.data.username) {
-              console.log(msg.data.username + '离开了聊天室');
-              var data = {
-                text: msg.data.username + '离开了聊天室'
-              };
-              showNotice(data);
-            }
-            break;
+    var vm = new Vue({
+      el: '#app',
+      data() {
+        return {
+          account: '',
+          screen: 'index',
+          socket: null,
+          room: room
         }
-      })
-    }
+      },
+      created() {
+        console.log('创建完毕')
+      },
+      methods: {
+        login() {
+          axios({
+            url: 'http://127.0.0.1:39000/user/testLogin',
+            method: 'post',
+            data: { account: this.account }
+          }).then(res => {
+            //登陆成功 连接到大厅服务器
+            var result = res.data.data;
+            //连接到
+            this.socket = io.connect('ws://' + result.hallUrl)
+            this.screen = 'hall';
+          })
 
-    /*点击发送按钮*/
-    document.getElementById('send').onclick = function () {
-      var keywords = document.getElementById('keywords');
-      if (keywords.value === '') {
-        keywords.focus();
-        return false;
+
+        },
+
+        clearRoom() {
+          this.socket.emit('clearRoom', (res) => {
+            console.log(res)
+          })
+        },
+
+        addRoom() {
+          var data = {
+            account
+          }
+        }
+
       }
-      var data = {
-        text: keywords.value,
-        type: 0,
-        username: username,
-        roomid: roomid
-      };
-      /*向服务器提交一个say事件，发送消息*/
-      socket.emit('say', data);
-      showMessage(data);
-      keywords.value = "";
-      keywords.focus();
-    };
-    /*展示消息*/
-    function showMessage(data) {
-      var itemArr = [];
-      itemArr.push('<dd class="' + (data.type === 0 ? "me" : "other") + '">');
-      itemArr.push('<ul>');
-      itemArr.push('<li class="nick-name">' + data.username + '</li>');
-      itemArr.push('<li class="detail">');
-      itemArr.push('<div class="head-icon"></div>');
-      itemArr.push('<div class="text">' + data.text + '</div>');
-      itemArr.push('</li>');
-      itemArr.push('</ul>');
-      itemArr.push('</dd>');
-      document.getElementById('list').innerHTML += itemArr.join('');
-    }
-    /*展示通知*/
-    function showNotice(data) {
-      var item = '<dd class="tc"><span>' + data.text + '</span><dd>';
-      document.getElementById('list').innerHTML += item;
-    }
-    /*回车事件*/
-    document.onkeyup = function (e) {
-      if (!e) e = window.event;
-      if ((e.keyCode || e.which) == 13) {
-        document.getElementById('send').click();
-      }
-    }
+    })
+
   </script>
 </body>
 
 </html>
-
-

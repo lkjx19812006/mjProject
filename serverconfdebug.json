@@ -1,27 +1,11 @@
 {
-  "logmask": "房卡麻将",
-  "preaction": {
-    "script": {
-      "cmd": ""
-    }
-  },
   "services": {
-    "webServer": {
+    "webService": {
       "hosts": [
         {
           "id": "webServer",
           "ip": "127.0.0.1",
           "port": "39000",
-          "custom": {}
-        }
-      ]
-    },
-    "Door": {
-      "hosts": [
-        {
-          "id": "Door1",
-          "ip": "127.0.0.1",
-          "port": "39301",
           "custom": {}
         }
       ]
@@ -57,19 +41,8 @@
           "custom": {}
         }
       ]
-    },
-    "RedisService": {
-      "hosts": [
-        {
-          "id": "RedisService",
-          "ip": "127.0.0.1",
-          "port": 6379,
-          "custom": {}
-        }
-      ]
     }
   },
-  "doors": {},
   "serverblance": {
     "HallService": [
       "127.0.0.1:39401",
@@ -89,11 +62,23 @@
       "dbname": "mj"
     }
   },
+  "redisCatch": {
+    "ip": "127.0.0.1",
+    "port": 6379,
+    "clear": true
+  },
   "ids": {
     "from": 10000000,
     "to": 99999999,
     "countpath": "data/idcounts.txt",
     "path": "data/ids.txt",
+    "create": false
+  },
+  "roomids": {
+    "from": 100000,
+    "to": 999999,
+    "countpath": "data/roomCounts.txt",
+    "path": "data/roomids.txt",
     "create": false
   },
   "safeCode": "sdf9ew98r8iwehjf234324u854395u34jsdfgjsdjghn0435r00",
