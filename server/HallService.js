@@ -28,6 +28,11 @@ const HallManager = function (serverConf, redisConf) {
 
   //监听客户端连接
   io.on('connection', (socket) => {
+    //登陆 连接大厅完成后 执行登陆操作 并设置账号登陆状态
+    socket.on('login', async (data) => {
+
+    })
+
 
     //加入房间
     socket.on('joinRoom', async (data) => {
@@ -44,11 +49,11 @@ const HallManager = function (serverConf, redisConf) {
 
     })
 
-    socket.on('clearRoom', async (cb) => {
+    socket.on('clearRoom', async (account, pass, cb) => {
       //调用接口获取房间id号
+      console.log(account, pass)
 
-
-      //cb && cb('测试创建房间')
+      cb && cb('测试创建房间')
     })
 
 

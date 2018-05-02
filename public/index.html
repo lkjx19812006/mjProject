@@ -62,8 +62,10 @@
         return {
           account: '',
           screen: 'index',
+          account: "",
+          pass: "",
           socket: null,
-          room: room
+          room: null
         }
       },
       created() {
@@ -80,6 +82,8 @@
             var result = res.data.data;
             //连接到
             this.socket = io.connect('ws://' + result.hallUrl)
+            this.account = result.account
+            this.pass = result.pass
             this.screen = 'hall';
           })
 
@@ -87,7 +91,7 @@
         },
 
         clearRoom() {
-          this.socket.emit('clearRoom', (res) => {
+          this.socket.emit('clearRoom', this.account, this.pass, (res) => {
             console.log(res)
           })
         },
