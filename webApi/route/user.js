@@ -8,6 +8,6 @@ const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json()
 
 router.post('/testLogin', jsonParser, handler.testLogin);
-router.get('/getRoomid', jsonParser, handler.getRoomids);
+router.post('/getRoomid', jsonParser, handler.getRoomids);
 
 module.exports = router;

@@ -72,7 +72,7 @@ class DataBaseManager {
     return Promise.resolve(info)
   }
 
-  async canLogin(account, pass, options = { id: 1 }) {
+  async canLogin(account, pass, options = { account: 1, pass: 1, nickname: 1, headimgurl: 1, score: 1, sex: 1, id: 1 }) {
     var userInfoModel = this.mog.getModle('userinfo')
     var infos = await userInfoModel.findOne(
       { account: account, pass: pass }, options
