@@ -26,15 +26,15 @@ class ServiceManager {
     for (var key in this.conf) {
       try {
         //引入服务文件
-        var service = require(`./${key}.js`);
+        var Service = require(`./${key}.js`);
         //获取服务参数
         var sers = this.conf[key]['hosts'];
         sers.forEach((item, index) => {
           //循环开启服务
-          service(item, this.redisConf)
+          new Service(item, this.redisConf)
         })
       } catch (error) {
-        console.log(new Error(`当前${key}服务的入口文件不存在 请在server文件下创建`))
+        console.log(new Error(error.toString()))
       }
 
     }

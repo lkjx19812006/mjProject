@@ -24,31 +24,36 @@ app.all('*', function (req, res, next) {
   next();
 });
 
-const webManager = async function (serverConf) {
-  if (!serverConf || !serverConf.port) {
-    console.log(new Error('WebService 文件初始化错误 未传递port'))
-    return;
+
+class webManager {
+  constructor(serverConf) {
+    if (!serverConf || !serverConf.port) {
+      console.log(new Error('WebService 文件初始化错误 未传递port'))
+      return;
+    }
+    this.init(serverConf)
+  }
+  async init(serverConf) {
+    //初始化数据库
+    var ok = await DataBaseManager.initDBFromServerConfig()
+    if (!ok) {
+      console.log(new Error('"数据库初始化错误！请检查'));
+      return
+    }
+
+    //处理Api接口路由
+    const user = require('../webApi/route/user');
+    app.use('/user', user)
+
+    app.listen(serverConf.port)
+    console.log('web 服务开启成功，当前端口为：' + serverConf.port)
   }
 
-  //初始化数据库
-  var ok = await DataBaseManager.initDBFromServerConfig()
-  if (!ok) {
-    console.log(new Error('"数据库初始化错误！请检查'));
-    return
-  }
-
-
-  //处理Api接口路由
-  const user = require('../webApi/route/user');
-  app.use('/user', user)
-
-  app.listen(serverConf.port)
-  console.log('web 服务开启成功，当前端口为：' + serverConf.port)
 }
 
 //多进程启动 生产模式进行
 if (process.argv[2] && conf.mode !== 'debug') {
-  webManager({ port: process.argv[2] });
+  new webManager({ port: process.argv[2] });
 }
 
 module.exports = webManager

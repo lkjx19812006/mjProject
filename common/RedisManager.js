@@ -2,14 +2,32 @@
 const Redis = require('ioredis')
 const conf = require('../common/Config').instance()
 class RedisManager {
-  constructor(io, Serverport) {
+  constructor() {
     this.conf = conf.getConfig('redisCatch');
     this.redis = new Redis(this.conf.port, this.conf.ip);
   }
 
+  //设置用户session
+  async setSession(playerId, key, value) {
+    //先拿 没有默认为空对象
+    var result = await this.redis.get(playerId) || '{}';
+    result = JSON.parse(result)
+    result[key] = value
+    await this.redis.multi().set(playerId, JSON.stringify(result)).exec();
+  }
+
+  async getSession(playerId) {
+    var result = await this.redis.get(playerId).catch(err => {
+      result = null
+    })
+    return Promise.resolve(JSON.parse(result))
+  }
+
+
+
 
   //重置客户端加入数量
-  static resetClientNum() {
+  resetClientNum() {
     this.redis.multi().set('clientNum', 0).get('clientNum').exec((err, results) => {
       // results === [[null, 'OK'], [null, 'bar']]
       if (!err) {
@@ -20,7 +38,7 @@ class RedisManager {
 
 
   //设置当前客户端加入数量
-  static setClientNum(type) {
+  setClientNum(type) {
     this.redis.get('clientNum', (err, result) => {
       var clientNum = 0;
       if (result) {
