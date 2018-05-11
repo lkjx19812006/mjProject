@@ -24,6 +24,19 @@ class RedisManager {
   }
 
 
+  //创建或设置房间
+  async createOrSetRoom(roomid, roomInfo) {
+    await this.redis.multi().set(roomid, JSON.stringify(roomInfo)).exec();
+  }
+
+  async getRoomInfo(roomid) {
+    var result = await this.redis.get(roomid).catch(err => {
+      result = null
+    })
+    return Promise.resolve(JSON.parse(result))
+  }
+
+
 
 
   //重置客户端加入数量
