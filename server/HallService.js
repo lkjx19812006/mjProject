@@ -4,9 +4,6 @@ const ServerBlance = require('../common/ServerBlance').instance()
 
 const process = require('process')
 const RedisManager = require('../common/RedisManager') //主要用来做用户信息缓存
-const Redis = require('ioredis')//
-
-
 const WebHttp = require('../common/WebHttp')
 
 class HallManager {
@@ -38,25 +35,6 @@ class HallManager {
       })
 
 
-
-      //登陆 连接大厅完成后 执行登陆操作 并设置账号登陆状态
-      socket.on('authLogin', async (account, pass, hallUrl, cb) => {
-        if (!account || !pass) {
-          cb && cb({ ok: false, msg: '账号或密码为空', suc: false })
-        }
-        var infos = await DataBaseManager.canLogin(account, pass).catch(err => {
-          infos = null;
-        })
-        if (infos) {
-          //写入用户状态
-          await this.redis.setSession(infos.id, 'isLogin', true);
-          cb && cb({ ok: true, msg: '登陆成功', suc: true, data: infos })
-        } else {
-          cb && cb({ ok: true, msg: '登陆失败，服务器错误', suc: false, data: infos })
-        }
-
-      })
-
       //获取用户信息
       socket.on('getPlayerBaseInfo', async (account, pass, cb) => {
         if (!account || !pass) {
@@ -79,10 +57,8 @@ class HallManager {
           roominfo = null;
         })
         if (!roominfo) {
-          cb({ ok: false })
+          cb({ ok: false, msg: '房间号获取错误', suc: false })
         } else {
-          //获取分布式服务 游戏服务器
-          var gameUrl = ServerBlance.getIp("GameService", account);
 
           //定义房间信息
           //记录房间成员数组 [{playerId,playerState, handCard, hitCard, gph}] 用户加入房间时添加到数组
@@ -99,7 +75,7 @@ class HallManager {
           //存储改房间信息
           await this.redis.createOrSetRoom(roominfo.data.room, table);
           console.log(await this.redis.getRoomInfo(roominfo.data.room))
-          cb({ ok: true, suc: true, roomId: roominfo.data.room, gameUrl: gameUrl })
+          cb({ ok: true, suc: true, roomId: roominfo.data.room })
         }
       })
 

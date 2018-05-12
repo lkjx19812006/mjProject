@@ -29,6 +29,7 @@ class RedisManager {
     await this.redis.multi().set(roomid, JSON.stringify(roomInfo)).exec();
   }
 
+  //获取房间信息
   async getRoomInfo(roomid) {
     var result = await this.redis.get(roomid).catch(err => {
       result = null
@@ -36,6 +37,21 @@ class RedisManager {
     return Promise.resolve(JSON.parse(result))
   }
 
+  //获取房间信息 去掉房间中用户信息 rooms 中某一个key
+  async getRoomInfoFilterRoomsKey(roomid, key) {
+    var result = await this.redis.get(roomid).catch(err => {
+      result = null
+    })
+    if (!result) {
+      return Promise.resolve({})
+    } else {
+      result = JSON.parse(result);
+      result.rooms.forEach(item => {
+        item[key] = null;
+      })
+      return Promise.resolve(result)
+    }
+  }
 
 
 

@@ -2,6 +2,10 @@ const DataBaseManager = require('../../dbManager/DataBaseManager').instance()
 const IDs = require('../../common/IDs').instance()
 const Roomids = require('../../common/Roomids').instance()
 const ServerBlance = require('../../common/ServerBlance').instance()
+
+const RedisManager = require('../../common/RedisManager') //主要用来做用户信息缓存
+const redis = new RedisManager()
+
 class User {
   constructor() {
 
@@ -46,6 +50,51 @@ class User {
     res.status(200).send({ ok: true, msg: '获取成功', code: "1c0e", data: { room: roomids } })
   }
 
+  //大厅登陆校验
+  async hallLogin(req, res) {
+    var account = req.body.account;
+    var pass = req.body.pass;
+    if (!account || !pass) {
+      res.status(400).send({ ok: true, msg: '请输入账号或', code: '00e0' })
+      return
+    };
+    var infos = await DataBaseManager.canLogin(account, pass).catch(err => {
+      infos = null;
+    })
+    if (infos) {
+      //写入用户状态
+      await redis.setSession(infos.id, 'isLogin', true);
+      var hallUrl = ServerBlance.getIp("HallService", account);
+      infos.hallUrl = hallUrl
+      res.status(200).send({ ok: true, msg: '登陆成功', code: "1c0e", data: infos })
+    } else {
+      res.status(400).send({ ok: true, msg: '服务器错误', code: '00e0' })
+    }
+
+  }
+
+
+  //大厅登陆校验
+  async gameLogin(req, res) {
+    var account = req.body.account;
+    var pass = req.body.pass;
+    if (!account || !pass) {
+      res.status(400).send({ ok: true, msg: '请输入账号或', code: '00e0' })
+      return
+    };
+    var infos = await DataBaseManager.canLogin(account, pass).catch(err => {
+      infos = null;
+    })
+    if (infos) {
+      //写入用户状态
+      await redis.setSession(infos.id, 'isInGame', true);
+      var gameUrl = ServerBlance.getIp("GameService", account);
+      infos.gameUrl = gameUrl
+      res.status(200).send({ ok: true, msg: '登陆成功', code: "1c0e", data: infos })
+    } else {
+      res.status(400).send({ ok: true, msg: '服务器错误', code: '00e0' })
+    }
+  }
 
 }
 

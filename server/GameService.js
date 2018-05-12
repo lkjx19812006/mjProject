@@ -1,8 +1,10 @@
 const conf = require('../common/Config').instance();
 const DataBaseManager = require('../dbManager/DataBaseManager').instance()
+const ServerBlance = require('../common/ServerBlance').instance()
+
 const process = require('process')
 const RedisManager = require('../common/RedisManager') //主要用来做用户信息缓存
-const Redis = require('ioredis')//
+const Redis = require('ioredis')//用作消息订阅和分发
 
 const WebHttp = require('../common/WebHttp')
 
@@ -37,26 +39,6 @@ class GameService {
     //监听客户端连接
     this.io.on('connection', (socket) => {
 
-
-      //登陆 连接大厅完成后 执行登陆操作 并设置账号登陆状态
-      socket.on('gameLogin', async (account, pass, hallUrl, cb) => {
-        if (!account || !pass) {
-          cb && cb({ ok: false, msg: '账号或密码为空', suc: false })
-        }
-
-        var infos = await DataBaseManager.canLogin(account, pass).catch(err => {
-          infos = null;
-        })
-        if (infos) {
-          //写入是否在房间状态
-          await this.redis.setSession(infos.id, 'isInGame', true);
-          cb && cb({ ok: true, msg: '登陆成功', suc: true, data: infos })
-        } else {
-          cb && cb({ ok: true, msg: '登陆失败，服务器错误', suc: false, data: infos })
-        }
-
-      })
-
       //获取房间信息
       socket.on('getTableInfos', async (roomId, cb) => {
         var roomInfo = this.redis.getRoomInfo(roomId);
@@ -65,14 +47,27 @@ class GameService {
 
       //加入房间 以前有过 更新socketid 没有及新加入
       socket.on('joinRoom', async (roomId, playerInfo, socketid, cb) => {
+        if (!roomId || !playerInfo || !socketid || !cb) {
+          cb && cb({ ok: false, suc: false })
+          return
+        }
         //1.先获取房间信息
-        //{socketid, playerId, playerState, handCard, hitCard, gang, peng}
+        //房间信息格式
+        //var table = {
+        //   rooms: [],
+        //   roomState: 0,
+        //   createAccount: account,
+        //   roomid: roominfo.data.room
+        // }
+        //{socketid, playerInfo, playerState, handCard, hitCard, gang, peng}//后期可能还会有吃的牌 暂时不做
         var roomInfo = await this.redis.getRoomInfo(roomId);
         var rooms = roomInfo.rooms || null;
         if (!rooms) { cb(null) }
-        var flag = false;//假设当前用户不存在
+        var flag = false;//假设当前用户不在该房间中
+
+
         rooms.forEach(item => {
-          if (item.playerId === playerInfo.id) {
+          if (item.playerInfo.playerId === playerInfo.playerId) {
             flag = true;
             item.socketid = socketid;//登陆过可能是掉线或者其他问题 更新socketid 做私密消息使用
           }
@@ -80,14 +75,32 @@ class GameService {
         //没有数据 作为新加入
         if (!flag) {
           var obj = {};
-          obj.playerId = playerInfo.id;
-          obj.score = playerInfo.score;
+          obj.playerInfo = playerInfo;
           obj.socketid = socketid;
           obj.playerState = 0;
           obj.handCard = [];
           obj.hitCard = [];
           obj.gang = [];
           obj.peng = []
+          roomInfo.rooms.push(obj);
+          await this.redis.createOrSetRoom(roomId, roomInfo);
+        }
+        //新用户加入 设置房间用户信息
+        if (roomInfo.rooms.length <= 4) {
+          socket.join(roomId)
+          //订阅当前房间
+          this.sub.subscribe(roomId);
+          var afterRoomInfo = await this.redis.getRoomInfoFilterRoomsKey(roomId, 'handCard');//去掉手牌信息
+          console.log('用户加入房间后的房间信息')
+          console.log(afterRoomInfo)
+          cb && cb({ ok: true, suc: true, data: afterRoomInfo })
+          //广播用户加入消息
+          this.pub.publish(roomId, JSON.stringify({
+            "event": 'joinRoom',
+            "data": afterRoomInfo
+          }));
+        } else {
+          cb && cb({ ok: true, suc: false, msg: '当前房间人数已满，请换个房间' })
         }
       })
 

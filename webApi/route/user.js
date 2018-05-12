@@ -9,5 +9,7 @@ const jsonParser = bodyParser.json()
 
 router.post('/testLogin', jsonParser, handler.testLogin);
 router.post('/getRoomid', jsonParser, handler.getRoomids);
+router.post('/hallLogin', jsonParser, handler.hallLogin);
+router.post('/gameLogin', jsonParser, handler.gameLogin);
 
 module.exports = router;
