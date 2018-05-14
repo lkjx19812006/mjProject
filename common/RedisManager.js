@@ -24,22 +24,24 @@ class RedisManager {
   }
 
 
-  //创建或设置房间
-  async createOrSetRoom(roomid, roomInfo) {
-    await this.redis.multi().set(roomid, JSON.stringify(roomInfo)).exec();
+  //创建或设置房间 并返回创建的信息
+  async createOrSetRoom(roomId, roomInfo) {
+    var roomInfo = await this.redis.multi().set(roomId, JSON.stringify(roomInfo)).get(roomId).exec();
+    console.log(roomInfo[1][1])
+    return Promise.resolve(JSON.parse(roomInfo && roomInfo[1][1]))
   }
 
   //获取房间信息
-  async getRoomInfo(roomid) {
-    var result = await this.redis.get(roomid).catch(err => {
+  async getRoomInfo(roomId) {
+    var result = await this.redis.get(roomId).catch(err => {
       result = null
     })
     return Promise.resolve(JSON.parse(result))
   }
 
   //获取房间信息 去掉房间中用户信息 rooms 中某一个key
-  async getRoomInfoFilterRoomsKey(roomid, key) {
-    var result = await this.redis.get(roomid).catch(err => {
+  async getRoomInfoFilterRoomsKey(roomId, key) {
+    var result = await this.redis.get(roomId).catch(err => {
       result = null
     })
     if (!result) {

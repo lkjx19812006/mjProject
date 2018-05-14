@@ -3,8 +3,8 @@ const DataBaseManager = require('../dbManager/DataBaseManager').instance()
 const ServerBlance = require('../common/ServerBlance').instance()
 
 const process = require('process')
-const RedisManager = require('../common/RedisManager') //主要用来做用户信息缓存
 const WebHttp = require('../common/WebHttp')
+const Room = require('../app/Room')
 
 class HallManager {
   constructor(serverConf, redisConf) {
@@ -12,10 +12,8 @@ class HallManager {
       console.log(new Error('HallService 文件初始化错误 未传递port'))
       return;
     }
-
     this.io = require('socket.io')(serverConf.port, {})
-    this.redis = new RedisManager() //获取redis 主要用来操作用户信息
-
+    this.room = Room.instance()
     this.init()
   }
 
@@ -59,23 +57,8 @@ class HallManager {
         if (!roominfo) {
           cb({ ok: false, msg: '房间号获取错误', suc: false })
         } else {
-
-          //定义房间信息
-          //记录房间成员数组 [{playerId,playerState, handCard, hitCard, gph}] 用户加入房间时添加到数组
-          //当前房间状态 roomState 0未开始 1已经开始 2已经结束
-          //房间创建者 createAccount 创建房间的用户z
-          //房间id  roomid 房间id
-          //后续 摸打杠胡状态 暂不定义
-          var table = {
-            rooms: [],
-            roomState: 0,
-            createAccount: account,
-            roomid: roominfo.data.room
-          }
-          //存储改房间信息
-          await this.redis.createOrSetRoom(roominfo.data.room, table);
-          console.log(await this.redis.getRoomInfo(roominfo.data.room))
-          cb({ ok: true, suc: true, roomId: roominfo.data.room })
+          var newRoomInfo = await this.room.createRoom(roominfo.data.room, account)
+          cb({ ok: true, suc: true, roomId: newRoomInfo.roomId })
         }
       })
 

@@ -71,7 +71,7 @@ class Roomids {
     this.countNum++;
     fs.writeFileSync(this.idsCountPath, this.countNum);
     return new Promise((resolve, reject) => {
-      console.log('当前用户ID编号：' + this.countNum)
+      console.log('当前房间ID编号：' + this.countNum)
       var startBufferIndex = this.countNum * 4;
 
       var stream = fs.createReadStream(this.idsPath, { start: startBufferIndex, end: startBufferIndex + 4, flags: "r" })
@@ -79,7 +79,7 @@ class Roomids {
       var prePath = __dirname;
       stream.on("data", (dataBuffer) => {
         var id = dataBuffer.readUInt32LE(0);
-        console.log('对应ID：' + id)
+        console.log('对应房间ID：' + id)
         resolve(id);
         console.log('程序执行完成用时' + (Date.now() - now))
       })
