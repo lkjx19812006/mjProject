@@ -98,9 +98,10 @@ class Room {
       newPlayerRoom.socketid = socketid;//设置该作为下的socketid 私密消息用
       roomInfo.rooms.push(newPlayerRoom);//房间添加座位信息    
     }
-    await this.redis.createOrSetRoom(roomId, roomInfo);//更新房间信息
+    var newRoomInfo = await this.redis.createOrSetRoom(roomId, roomInfo);//更新房间信息
+    return Promise.resolve(newRoomInfo)
   }
-  
+
 }
 Room.g_instance = null;
 module.exports = Room

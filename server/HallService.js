@@ -5,6 +5,7 @@ const ServerBlance = require('../common/ServerBlance').instance()
 const process = require('process')
 const WebHttp = require('../common/WebHttp')
 const Room = require('../app/Room')
+const Robs = require('../app/Robs')
 
 class HallManager {
   constructor(serverConf, redisConf) {
@@ -59,6 +60,16 @@ class HallManager {
         } else {
           var newRoomInfo = await this.room.createRoom(roominfo.data.room, account)
           cb({ ok: true, suc: true, roomId: newRoomInfo.roomId })
+          //创建房间成功后使用机器人加入房间功能
+          setTimeout(function () {
+            new Robs(2, 2, newRoomInfo.roomId);
+          }, 100)
+          setTimeout(function () {
+            new Robs(3, 3, newRoomInfo.roomId);
+          }, 200)
+          setTimeout(function () {
+            new Robs(4, 4, newRoomInfo.roomId);
+          }, 300)
         }
       })
 

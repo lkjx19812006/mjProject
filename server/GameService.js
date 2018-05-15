@@ -37,6 +37,7 @@ class GameService {
   init() {
     //监听客户端连接
     this.io.on('connection', (socket) => {
+      var date = new Date().getTime()
       //--------------------------游戏服务开始----------------------------------
       socket.on('joinRoom', async (roomId, playerInfo, socketid, cb) => {
         if (!roomId || !playerInfo || !socketid || !cb) {
@@ -49,9 +50,10 @@ class GameService {
           cb && cb({ ok: true, suc: false, msg: '当前房间人数已满，请换个房间' })
           return;
         }
+
+
         //更新房间信息
-        await this.room.joinRoom(roomId, playerInfo, socketid);
-        var newRoomInfo = await this.room.getRoomInfoFilterRoomsKey(roomId, 'handCard')
+        var newRoomInfo = await this.room.joinRoom(roomId, playerInfo, socketid);
         socket.join(roomId)
         //订阅当前房间
         this.sub.subscribe(roomId);
@@ -61,6 +63,7 @@ class GameService {
           "event": 'joinRoom',
           "data": newRoomInfo
         }));
+        console.log('当前加入房间用时：' + (new Date().getTime() - date))
       })
 
 
