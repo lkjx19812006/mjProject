@@ -35,21 +35,19 @@ class RedisManager {
   async joinRoom(roomId, playerRoomInfo) {
     //判断该用户信息是否存在
     var key = 'room:roomId:' + roomId + ':userId:' + playerRoomInfo.playerId;
-    if (!await this.redis.exists(key)) {//没有该键设置键
+    var result = await this.redis.get(key);
+    if (!result) {//没有该键设置键
       this.redis.set(key, JSON.stringify(playerRoomInfo))//该房间的用户信息
-      this.redis.incr(key)//设置房间人数   
+      this.redis.incr('room:roomId:' + roomId + ':playerNum')//设置房间人数   
     } else {
       //更新用户信息 可能做到掉线处理
-      var result = await this.redis.get(key);
-      if (result) {
-        result = JSON.parse(result);
-        playerRoomInfo.playerState = result.playerState;//用户状态0未准备 1准备 2离开
-        playerRoomInfo.handCard = result.handCard;//用户手牌
-        playerRoomInfo.hitCard = result.hitCard;//用户打的牌
-        playerRoomInfo.gang = result.gang;//杠牌
-        playerRoomInfo.peng = result.peng;//碰牌
-        this.redis.set(key, JSON.stringify(playerRoomInfo))//该房间的用户信息
-      }
+      result = JSON.parse(result);
+      playerRoomInfo.playerState = result.playerState;//用户状态0未准备 1准备 2离开
+      playerRoomInfo.handCard = result.handCard;//用户手牌
+      playerRoomInfo.hitCard = result.hitCard;//用户打的牌
+      playerRoomInfo.gang = result.gang;//杠牌
+      playerRoomInfo.peng = result.peng;//碰牌
+      this.redis.set(key, JSON.stringify(playerRoomInfo))//该房间的用户信息
     }
   }
 
@@ -62,14 +60,14 @@ class RedisManager {
       playerNum: 0
     }
     //获取当前房间的所有用户的key
-    var useKeys = await this.redis.keys('room:roomId:' + roomId + ':userId:*');
-    var userInfo = await this.redis.mget([useKeys]);
-    if (userInfo) {
-      roomInfo.rooms.push(JSON.parse(userInfo))
-    }
-    roomInfo.state = await this.redis.get('room:roomId:' + roomId + ':state');
+    var useKeys = await this.redis.keys('room:roomId:' + roomId + ':userId:\*');
+    var roomUserInfos = await this.redis.mget(useKeys);
+    roomUserInfos.forEach(item => {
+      roomInfo.rooms.push(JSON.parse(item))
+    })
+    roomInfo.state = Number(await this.redis.get('room:roomId:' + roomId + ':state') || 0)
     roomInfo.createAccount = await this.redis.get('room:roomId:' + roomId + ':createAccount');
-    roomInfo.playerNum = await this.redis.get('room:roomId:' + roomId + ':playerNum');
+    roomInfo.playerNum = Number(await this.redis.get('room:roomId:' + roomId + ':playerNum') || 0);
     return Promise.resolve(roomInfo)
   }
 

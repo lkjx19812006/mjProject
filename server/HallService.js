@@ -58,6 +58,9 @@ class HallManager {
           setTimeout(function () {
             new Robs(4, 4, roomId);
           })
+          // setTimeout(function () {
+          //   new Robs(5, 5, roomId);
+          // })
         }
       })
 

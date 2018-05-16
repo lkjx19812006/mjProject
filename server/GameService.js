@@ -44,72 +44,20 @@ class GameService {
           cb && cb({ ok: false, suc: false })
           return
         }
-<<<<<<< HEAD
-        //1.先获取房间信息
-        //房间信息格式
-        //var table = {
-        //   rooms: [],
-        //   roomState: 0,
-        //   createAccount: account,
-        //   roomid: roominfo.data.room
-        // }
-        //{socketid, playerInfo, playerState, handCard, hitCard, gang, peng}//后期可能还会有吃的牌 暂时不做
-        var roomInfo = await this.redis.getRoomInfo(roomId);
-        var rooms = roomInfo.rooms || null;
-        if (!rooms) { cb(null) }
-        var flag = false;//假设当前用户不在该房间中
-
-
-        rooms.forEach(item => {
-          if (item.playerInfo.playerId === playerInfo.playerId) {
-            flag = true;
-            item.socketid = socketid;//登陆过可能是掉线或者其他问题 更新socketid 做私密消息使用
-          }
-        });
-        //没有数据 作为新加入
-        if (!flag) {
-          var obj = {};
-          obj.playerInfo = playerInfo;
-          obj.socketid = socketid;
-          obj.playerState = 0;
-          obj.handCard = [];
-          obj.hitCard = [];
-          obj.gang = [];
-          obj.peng = []
-          roomInfo.rooms.push(obj);
-          await this.redis.createOrSetRoom(roomId, roomInfo);
-        }
-        //新用户加入 设置房间用户信息
-        if (roomInfo.rooms.length <= 4) {
-          socket.join(roomId)
-          //订阅当前房间
-          this.sub.subscribe(roomId);
-          var afterRoomInfo = await this.redis.getRoomInfoFilterRoomsKey(roomId, 'handCard');//去掉手牌信息
-          console.log('用户加入房间后的房间信息')
-          console.log(afterRoomInfo)
-
-          cb && cb({ ok: true, suc: true, data: afterRoomInfo })
-          //广播用户加入消息
-          this.pub.publish(roomId, JSON.stringify({
-            "event": 'joinRoom',
-            "data": afterRoomInfo
-          }));
-        } else {
-=======
         //校验坐位人数
         var playerNum = await this.redis.getRoomPlayerNum(roomId);
         if (playerNum >= 4) {
->>>>>>> 07c477840c803b066938d99d23cd65d0c1af7051
           cb && cb({ ok: true, suc: false, msg: '当前房间人数已满，请换个房间' })
           return;
         }
         //更新房间信息
         await this.redis.joinRoom(roomId, playerInfo);
+        console.log('加入房间成功')
         socket.join(roomId)
         //订阅当前房间
         this.sub.subscribe(roomId);
 
-        var newRoomInfo = await this.redis.getRoomInfoFilterRoomsKey(roomId, 'handCard')
+        var newRoomInfo = await this.redis.getRoomInfo(roomId)
         cb && cb({ ok: true, suc: true, data: newRoomInfo });
         //广播用户加入消息
         this.pub.publish(roomId, JSON.stringify({
