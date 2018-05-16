@@ -58,7 +58,9 @@ class Room {
     var roomInfo = new RoomTemp()
     roomInfo.roomId = roomId;
     roomInfo.createAccount = account;
-    var newRoomInfo = await this.redis.createOrSetRoom(roomId, roomInfo);
+    await this.redis.createRoom(roomId, roomInfo);
+    //这里可能有点问题
+    var newRoomInfo = await this.redis.getRoomInfo(roomId)
     return Promise.resolve(newRoomInfo)
   }
 
@@ -80,17 +82,6 @@ class Room {
   //加入房间 实现思路
   async joinRoom(roomId, playerInfo, socketid) {
     //1.获取当前房间信息
-    var roomInfo = await this.redis.getRoomInfo(roomId);
-    var rooms = roomInfo.rooms || null;
-    if (!rooms) return Promise.resolve(rooms);
-    //2.查看当前用户是否在该房间中
-    var isInRoom = false;
-    rooms.forEach(item => {
-      if (item.playerInfo.playerId === playerInfo.playerId) {
-        isInRoom = true;//在房间中
-        item.socketid = socketid;//更新连接id
-      }
-    });
     if (!isInRoom && rooms.length < 4) {
       //没有在房间中
       var newPlayerRoom = new RoomsTemp();//获取座位模板
@@ -98,7 +89,7 @@ class Room {
       newPlayerRoom.socketid = socketid;//设置该作为下的socketid 私密消息用
       roomInfo.rooms.push(newPlayerRoom);//房间添加座位信息    
     }
-    var newRoomInfo = await this.redis.createOrSetRoom(roomId, roomInfo);//更新房间信息
+    this.redis.joinRoom(roomId, playerInfo);//更新房间信息    
     return Promise.resolve(newRoomInfo)
   }
 

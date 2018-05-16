@@ -33,8 +33,15 @@ class Robs {
       playerInfo.headUrl = this.headUrl;
       playerInfo.score = this.score;
       playerInfo.playerId = this.id;
+      playerInfo.socketId = this.gameClient.id;//客户端连接ID
+      playerInfo.playerState = 0;//用户状态0未准备 1准备 2离开
+      playerInfo.handCard = [];//用户手牌
+      playerInfo.hitCard = [];//用户打的牌
+      playerInfo.gang = [];//杠牌
+      playerInfo.peng = [];//碰牌
+
       console.log('机器人加入房间：' + this.roomId);
-      this.gameClient.emit('joinRoom', this.roomId, playerInfo, this.gameClient.id, (data) => {
+      this.gameClient.emit('joinRoom', this.roomId, playerInfo, (data) => {
         console.log('机器人' + this.account + '加入房间成功')
         console.log(data)
       })

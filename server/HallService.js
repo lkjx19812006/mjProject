@@ -4,7 +4,7 @@ const ServerBlance = require('../common/ServerBlance').instance()
 
 const process = require('process')
 const WebHttp = require('../common/WebHttp')
-const Room = require('../app/Room')
+const RedisManager = require('../common/RedisManager')//房间信息操作
 const Robs = require('../app/Robs')
 
 class HallManager {
@@ -14,26 +14,13 @@ class HallManager {
       return;
     }
     this.io = require('socket.io')(serverConf.port, {})
-    this.room = Room.instance()
+    this.redis = new RedisManager()
     this.init()
   }
 
   init() {
     //监听客户端连接
     this.io.on('connection', (socket) => {
-      //1客户端调用io方法 链接到大厅服务器
-      // 1.1客户端监听到链接成功后立马校验用户的账号，密码
-      // 1.2校验成功后 返回给用户的account、pass、score、nickname、id、大厅链接（hallUrl）
-      // 1.3设置用户登陆状态 为true
-
-      socket.on('getSession', async (playerId, cb) => {
-        var result = await this.redis.getSession(playerId).catch(err => {
-          result = null;
-        });
-        cb(result)
-      })
-
-
       //获取用户信息
       socket.on('getPlayerBaseInfo', async (account, pass, cb) => {
         if (!account || !pass) {
@@ -58,18 +45,19 @@ class HallManager {
         if (!roominfo) {
           cb({ ok: false, msg: '房间号获取错误', suc: false })
         } else {
-          var newRoomInfo = await this.room.createRoom(roominfo.data.room, account)
-          cb({ ok: true, suc: true, roomId: newRoomInfo.roomId })
+          var roomId = roominfo.data.roomId//房间Id
+          await this.redis.createRoom(roomId, account)
+          cb({ ok: true, suc: true, roomId: roomId })
           //创建房间成功后使用机器人加入房间功能
           setTimeout(function () {
-            new Robs(2, 2, newRoomInfo.roomId);
-          }, 100)
+            new Robs(2, 2, roomId);
+          })
           setTimeout(function () {
-            new Robs(3, 3, newRoomInfo.roomId);
-          }, 200)
+            new Robs(3, 3, roomId);
+          })
           setTimeout(function () {
-            new Robs(4, 4, newRoomInfo.roomId);
-          }, 300)
+            new Robs(4, 4, roomId);
+          })
         }
       })
 
