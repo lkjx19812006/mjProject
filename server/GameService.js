@@ -93,6 +93,7 @@ class GameService {
           var afterRoomInfo = await this.redis.getRoomInfoFilterRoomsKey(roomId, 'handCard');//去掉手牌信息
           console.log('用户加入房间后的房间信息')
           console.log(afterRoomInfo)
+
           cb && cb({ ok: true, suc: true, data: afterRoomInfo })
           //广播用户加入消息
           this.pub.publish(roomId, JSON.stringify({

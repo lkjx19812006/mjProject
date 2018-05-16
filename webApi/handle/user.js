@@ -32,7 +32,7 @@ class User {
         id,
         account,
         account,
-        '测试',
+        '测试' + account,
         1,
         'http://i4.cfimg.com/583278/00e2ef22ec67b9b0.jpg',
         account,
