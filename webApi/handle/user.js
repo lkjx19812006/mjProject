@@ -46,8 +46,8 @@ class User {
 
   //获取当前房间号
   async getRoomids(req, res) {
-    var roomids = await Roomids.getID();
-    res.status(200).send({ ok: true, msg: '获取成功', code: "1c0e", data: { room: roomids } })
+    var roomId = await Roomids.getID();
+    res.status(200).send({ ok: true, msg: '获取成功', code: "1c0e", data: { roomId: roomId } })
   }
 
   //大厅登陆校验

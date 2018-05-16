@@ -3,10 +3,10 @@ const DataBaseManager = require('../dbManager/DataBaseManager').instance()
 const ServerBlance = require('../common/ServerBlance').instance()
 
 const process = require('process')
-const RedisManager = require('../common/RedisManager') //主要用来做用户信息缓存
 const Redis = require('ioredis')//用作消息订阅和分发
+const RedisManager = require('../common/RedisManager')//房间信息操作
 
-const WebHttp = require('../common/WebHttp')
+//创建机器人加入房间
 
 class GameService {
   constructor(serverConf, redisConf) {
@@ -18,8 +18,7 @@ class GameService {
     this.io = require('socket.io')(serverConf.port, {})
     this.pub = new Redis(redisConf.port, redisConf.ip)
     this.sub = new Redis(redisConf.port, redisConf.ip)
-    this.redis = new RedisManager() //获取redis 主要用来操作用户信息
-
+    this.redis = new RedisManager();
 
     //开启订阅功能
     this.sub.on("subscribe", (channel, count) => {
@@ -38,19 +37,14 @@ class GameService {
   init() {
     //监听客户端连接
     this.io.on('connection', (socket) => {
-
-      //获取房间信息
-      socket.on('getTableInfos', async (roomId, cb) => {
-        var roomInfo = this.redis.getRoomInfo(roomId);
-        cb(roomInfo)
-      })
-
-      //加入房间 以前有过 更新socketid 没有及新加入
-      socket.on('joinRoom', async (roomId, playerInfo, socketid, cb) => {
-        if (!roomId || !playerInfo || !socketid || !cb) {
+      var date = new Date().getTime()
+      //--------------------------游戏服务开始----------------------------------
+      socket.on('joinRoom', async (roomId, playerInfo, cb) => {
+        if (!roomId || !playerInfo) {
           cb && cb({ ok: false, suc: false })
           return
         }
+<<<<<<< HEAD
         //1.先获取房间信息
         //房间信息格式
         //var table = {
@@ -101,12 +95,32 @@ class GameService {
             "data": afterRoomInfo
           }));
         } else {
+=======
+        //校验坐位人数
+        var playerNum = await this.redis.getRoomPlayerNum(roomId);
+        if (playerNum >= 4) {
+>>>>>>> 07c477840c803b066938d99d23cd65d0c1af7051
           cb && cb({ ok: true, suc: false, msg: '当前房间人数已满，请换个房间' })
+          return;
         }
+        //更新房间信息
+        await this.redis.joinRoom(roomId, playerInfo);
+        socket.join(roomId)
+        //订阅当前房间
+        this.sub.subscribe(roomId);
+
+        var newRoomInfo = await this.redis.getRoomInfoFilterRoomsKey(roomId, 'handCard')
+        cb && cb({ ok: true, suc: true, data: newRoomInfo });
+        //广播用户加入消息
+        this.pub.publish(roomId, JSON.stringify({
+          "event": 'joinRoom',
+          "data": newRoomInfo
+        }));
+        console.log('当前加入房间用时：' + (new Date().getTime() - date))
       })
 
 
-
+      //---------------------------游戏服务结束---------------------------------
     })
   }
 

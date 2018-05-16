@@ -24,74 +24,72 @@ class RedisManager {
   }
 
 
-  //创建或设置房间
-  async createOrSetRoom(roomid, roomInfo) {
-    await this.redis.multi().set(roomid, JSON.stringify(roomInfo)).exec();
+  //创建或设置房间 并返回创建的信息
+  async createRoom(roomId, account) {
+    this.redis.set('room:roomId:' + roomId + ':state', 0)//设置房间状态0
+    this.redis.set('room:roomId:' + roomId + ':playerNum', 0)//设置当前房间人数
+    this.redis.set('room:roomId:' + roomId + ':createAccount', account)//设置当前创建者
   }
 
-  //获取房间信息
-  async getRoomInfo(roomid) {
-    var result = await this.redis.get(roomid).catch(err => {
-      result = null
-    })
-    return Promise.resolve(JSON.parse(result))
-  }
-
-  //获取房间信息 去掉房间中用户信息 rooms 中某一个key
-  async getRoomInfoFilterRoomsKey(roomid, key) {
-    var result = await this.redis.get(roomid).catch(err => {
-      result = null
-    })
-    if (!result) {
-      return Promise.resolve({})
+  //加入房间 并返回该房间的信息
+  async joinRoom(roomId, playerRoomInfo) {
+    //判断该用户信息是否存在
+    var key = 'room:roomId:' + roomId + ':userId:' + playerRoomInfo.playerId;
+    if (!await this.redis.exists(key)) {//没有该键设置键
+      this.redis.set(key, JSON.stringify(playerRoomInfo))//该房间的用户信息
+      this.redis.incr(key)//设置房间人数   
     } else {
-      result = JSON.parse(result);
-      result.rooms.forEach(item => {
-        item[key] = null;
-      })
-      return Promise.resolve(result)
+      //更新用户信息 可能做到掉线处理
+      var result = await this.redis.get(key);
+      if (result) {
+        result = JSON.parse(result);
+        playerRoomInfo.playerState = result.playerState;//用户状态0未准备 1准备 2离开
+        playerRoomInfo.handCard = result.handCard;//用户手牌
+        playerRoomInfo.hitCard = result.hitCard;//用户打的牌
+        playerRoomInfo.gang = result.gang;//杠牌
+        playerRoomInfo.peng = result.peng;//碰牌
+        this.redis.set(key, JSON.stringify(playerRoomInfo))//该房间的用户信息
+      }
     }
   }
 
-
-
-  //重置客户端加入数量
-  resetClientNum() {
-    this.redis.multi().set('clientNum', 0).get('clientNum').exec((err, results) => {
-      // results === [[null, 'OK'], [null, 'bar']]
-      if (!err) {
-        console.log('当前客户端链接数量：' + 0)
-      }
-    });
+  //获取房间信息
+  async getRoomInfo(roomId) {
+    var roomInfo = {
+      rooms: [],
+      state: 0,//0已创建 1发牌中 2游戏中 3游戏结束 4房间失效
+      createAccount: null,
+      playerNum: 0
+    }
+    //获取当前房间的所有用户的key
+    var useKeys = await this.redis.keys('room:roomId:' + roomId + ':userId:*');
+    var userInfo = await this.redis.mget([useKeys]);
+    if (userInfo) {
+      roomInfo.rooms.push(JSON.parse(userInfo))
+    }
+    roomInfo.state = await this.redis.get('room:roomId:' + roomId + ':state');
+    roomInfo.createAccount = await this.redis.get('room:roomId:' + roomId + ':createAccount');
+    roomInfo.playerNum = await this.redis.get('room:roomId:' + roomId + ':playerNum');
+    return Promise.resolve(roomInfo)
   }
 
-
-  //设置当前客户端加入数量
-  setClientNum(type) {
-    this.redis.get('clientNum', (err, result) => {
-      var clientNum = 0;
-      if (result) {
-        clientNum = parseInt(result);
-      }
-      if (type === 'join') {//加入
-        clientNum++
-      } else if (type === 'quit') {//离开
-        clientNum--
-      }
-      this.redis.multi().set('clientNum', clientNum).get('clientNum').exec((err, results) => {
-        // results === [[null, 'OK'], [null, 'bar']]
-        if (!err) {
-          console.log('当前客户端链接数量：' + results[1][1])
-        }
-      });
-    });
-
+  //获取当前房间人数
+  async getRoomPlayerNum(roomId) {
+    return await this.redis.get('room:roomId:' + roomId + ':playerNum');//获取当前房间下的人数
   }
 
-
-
-
-
+  //获取房间信息 去掉房间中用户信息 rooms 中某一个key
+  async getRoomInfoFilterRoomsKey(roomId, key) {
+    var roomInfo = await this.getRoomInfo(roomId);
+    if (!roomInfo) {
+      return Promise.resolve({})
+    } else {
+      roomInfo.rooms.forEach(item => {
+        item[key] = null;
+      })
+      return Promise.resolve(roomInfo)
+    }
+  }
 
 }
 
