@@ -44,9 +44,9 @@ class GameService {
           cb && cb({ ok: false, suc: false })
           return
         }
-        //校验坐位人数
+        //校验坐位人数 限制一个房间四个人
         var playerNum = await this.redis.getRoomPlayerNum(roomId);
-        if (playerNum >= 4) {
+        if (playerNum >= 5) {
           cb && cb({ ok: true, suc: false, msg: '当前房间人数已满，请换个房间' })
           return;
         }
