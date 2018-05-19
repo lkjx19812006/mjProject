@@ -7,6 +7,9 @@ const WebHttp = require('../common/WebHttp')
 const RedisManager = require('../common/RedisManager')//房间信息操作
 const Robs = require('../app/Robs')
 
+//初始化数据库
+
+
 class HallManager {
   constructor(serverConf, redisConf) {
     if (!serverConf || !serverConf.port || !redisConf || !redisConf.port) {
@@ -18,7 +21,14 @@ class HallManager {
     this.init()
   }
 
-  init() {
+  async init() {
+    //初始化数据库
+    var ok = await DataBaseManager.initDBFromServerConfig()
+    if (!ok) {
+      console.log(new Error('"数据库初始化错误！请检查'));
+      return
+    }
+
     //监听客户端连接
     this.io.on('connection', (socket) => {
       //获取用户信息
@@ -26,6 +36,12 @@ class HallManager {
         if (!account || !pass) {
           cb && cb({ ok: false, msg: '信息错误', suc: false })
         }
+        console.log(account, pass)
+        DataBaseManager.canLogin(account, pass).then(res => {
+          console.log(res)
+        })
+
+
         var infos = await DataBaseManager.canLogin(account, pass).catch(err => {
           infos = null;
         })

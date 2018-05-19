@@ -14,7 +14,6 @@ class GameService {
       console.log(new Error('GameService 文件初始化错误 未传递port'))
       return;
     }
-
     this.io = require('socket.io')(serverConf.port, {})
     this.pub = new Redis(redisConf.port, redisConf.ip)
     this.sub = new Redis(redisConf.port, redisConf.ip)
@@ -34,11 +33,21 @@ class GameService {
     this.init()
   }
 
-  init() {
+  async init() {
+    //初始化数据库
+    var ok = await DataBaseManager.initDBFromServerConfig()
+    if (!ok) {
+      console.log(new Error('"数据库初始化错误！请检查'));
+      return
+    }
+
     //监听客户端连接
     this.io.on('connection', (socket) => {
       var date = new Date().getTime()
       //--------------------------游戏服务开始----------------------------------
+
+
+
       socket.on('joinRoom', async (roomId, playerInfo, cb) => {
         if (!roomId || !playerInfo) {
           cb && cb({ ok: false, suc: false })

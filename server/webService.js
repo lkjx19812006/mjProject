@@ -45,15 +45,15 @@ class webManager {
     const user = require('../webApi/route/user');
     app.use('/user', user)
 
-    app.listen(serverConf.port)
-    console.log('web 服务开启成功，当前端口为：' + serverConf.port)
+    app.listen(serverConf.port, serverConf.ip)
+    console.log('web 服务开启成功，当前端口为：' + serverConf.ip + ':' + serverConf.port)
   }
 
 }
 
 //多进程启动 生产模式进行
 if (process.argv[2] && conf.mode !== 'debug') {
-  new webManager({ port: process.argv[2] });
+  new webManager({ port: process.argv[2], ip: process.argv[3] });
 }
 
 module.exports = webManager

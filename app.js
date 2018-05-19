@@ -8,6 +8,7 @@ const asyncRun = async function () {
     //单线程启动所有
     ServiceManager.startAllService()
   } else {
+    // ServiceManager.startAllService()
     //启动子进程
     ServiceManager.startProcessService();//开启进程服务
   }

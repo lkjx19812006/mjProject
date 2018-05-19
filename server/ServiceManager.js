@@ -48,25 +48,13 @@ class ServiceManager {
         var sers = this.conf[key]['hosts'];
         sers.forEach((item, index) => {
           //循环开启服务
-          fork(path.join(__dirname, `./${key}.js`), [item.port, item.id, item.custom]);
+          fork(path.join(__dirname, `./${key}.js`), [item.port, item.ip, item.id, item.custom]);
           console.log(`子进程/${key}启动成功:` + item.ip + ":" + item.port)
         })
       } catch (error) {
         console.log(new Error(`当前${key}服务的入口文件不存在 请在server文件下创建`))
       }
     }
-
-    // this.HallConf.forEach((item, index) => {
-    //   this.HallServices.push(fork(path.join(__dirname, './HallService.js'), [item.port, item.id, item.custom]));
-    //   console.log('子进程大厅服务启动成功:' + item.ip + ":" + item.port)
-    //   //监听进程消息
-    //   this.HallServices[index].on('message', (msg) => {
-    //     if (msg.cmd && msg.cmd === 'client connect') {
-    //       console.log('有用户加入')
-    //     }
-    //   })
-
-    // });
 
   }
 
