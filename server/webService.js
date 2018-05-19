@@ -45,7 +45,7 @@ class webManager {
     const user = require('../webApi/route/user');
     app.use('/user', user)
 
-    app.listen(serverConf.port, serverConf.ip)
+    app.listen(serverConf.port)
     console.log('web 服务开启成功，当前端口为：' + serverConf.ip + ':' + serverConf.port)
   }
 

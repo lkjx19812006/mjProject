@@ -7,8 +7,7 @@ const WebHttp = require('../common/WebHttp')
 const RedisManager = require('../common/RedisManager')//房间信息操作
 const Robs = require('../app/Robs')
 
-//初始化数据库
-
+const RoomHandler = require('../app/RoomHandler')
 
 class HallManager {
   constructor(serverConf, redisConf) {
@@ -22,13 +21,6 @@ class HallManager {
   }
 
   async init() {
-    //初始化数据库
-    var ok = await DataBaseManager.initDBFromServerConfig()
-    if (!ok) {
-      console.log(new Error('"数据库初始化错误！请检查'));
-      return
-    }
-
     //监听客户端连接
     this.io.on('connection', (socket) => {
       //获取用户信息
@@ -55,6 +47,18 @@ class HallManager {
 
       //创建房间
       socket.on('createroom', async (account, pass, custom, cb) => {
+        if (!account || !pass) {
+          cb({ ok: false, msg: '用户信息错误', suc: false })
+          return;
+        } else {
+          var infos = await DataBaseManager.canLogin(account, pass).catch(err => {
+            infos = null;
+          })
+          if (!infos) {
+            cb({ ok: true, msg: '用户不存在', suc: false })
+            return;
+          }
+        }
         var roominfo = await WebHttp.getRoomid('/user/getRoomid').catch(err => {
           roominfo = null;
         })
@@ -63,6 +67,7 @@ class HallManager {
         } else {
           var roomId = roominfo.data.roomId//房间Id
           await this.redis.createRoom(roomId, account)
+          new RoomHandler(roomId);
           cb({ ok: true, suc: true, roomId: roomId })
           //创建房间成功后使用机器人加入房间功能
           setTimeout(function () {
@@ -94,8 +99,17 @@ class HallManager {
 
 //多进程启动 生产模式进行
 if (process.argv[2] && conf.mode !== 'debug') {
-  var redisConf = conf.getConfig('redisCatch');
-  new HallManager({ port: process.argv[2] }, redisConf);
+  //初始化数据库
+  var start = async function () {
+    var ok = await DataBaseManager.initDBFromServerConfig()
+    if (!ok) {
+      console.log(new Error('"数据库初始化错误！请检查'));
+      return
+    }
+    var redisConf = conf.getConfig('redisCatch');
+    new HallManager({ port: process.argv[2] }, redisConf);
+  }
+  start()
 }
 
 module.exports = HallManager

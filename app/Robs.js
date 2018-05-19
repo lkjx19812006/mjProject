@@ -10,6 +10,7 @@ class Robs {
     this.headUrl = null;
     this.score = null;
     this.sex = null;
+    this.gameUrl = null;
     this.gameClient = null;
     this.login();
   }
@@ -28,12 +29,14 @@ class Robs {
       this.sex = userInfo.data.sex;
       this.hallUrl = userInfo.data.gameUrl;
       this.id = userInfo.data.id;
+      this.gameUrl = userInfo.data.gameUrl;
       var playerInfo = {};
       playerInfo.nickName = this.nickName;
       playerInfo.headUrl = this.headUrl;
       playerInfo.score = this.score;
       playerInfo.playerId = this.id;
       playerInfo.socketId = this.gameClient.id;//客户端连接ID
+      playerInfo.gameUrl = this.gameUrl;//游戏链接地址
       playerInfo.playerState = 0;//用户状态0未准备 1准备 2离开
       playerInfo.handCard = [];//用户手牌
       playerInfo.hitCard = [];//用户打的牌
