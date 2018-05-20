@@ -51,7 +51,5 @@ class Robs {
     });
 
   }
-
-
 }
 module.exports = Robs

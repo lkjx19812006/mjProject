@@ -67,7 +67,7 @@ class HallManager {
         } else {
           var roomId = roominfo.data.roomId//房间Id
           await this.redis.createRoom(roomId, account)
-          new RoomHandler(roomId);
+          new RoomHandler(roomId);//创建房间观察者
           cb({ ok: true, suc: true, roomId: roomId })
           //创建房间成功后使用机器人加入房间功能
           setTimeout(function () {
